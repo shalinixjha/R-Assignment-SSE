@@ -16,7 +16,76 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 
-```{r cars}
-summary (cars)
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE) # Show/Hide chunks in output
+knitr::opts_chunk$set(message = FALSE) # Show/Hide error messages
+knitr::opts_chunk$set(comment = NA) # Show/Hide comments
+library(readxl) # For loading Excel files
+library(kableExtra) # For table formatting
+library(ggplot2) # For graphs
+library(tinytex) # For making a pdf
+library(tibble) # For the temporary data
+library(dplyr)
+library(tidyr)
+library(RColorBrewer) # For heat map
+options(scipen=999) # Fix y-axis formats (for R in general)
+```
+
+```{r}
+data<-read_excel("25618.xlsx",1)
+data$date<-as.Date(data$date)
+data[data<0]<-0 # To simplify: We set negative values to zero
+```
+
+# --- PART A ---
+
+## Descriptive Statistics
+
+```{r}
+
+# Enter column to calculate
+column<-5
+
+# Select dates
+date1<-"2020-03-31"
+date2<-"2021-03-31"
+date3<-"2022-03-31"
+
+# Filter data
+data1<-data[data$date==date1,column]
+data2<-data[data$date==date2,column]
+data3<-data[data$date==date3,column]
+
+# Create functions
+functions<-function(x){
+    list("N"            = sum (!is.na(x)),
+         "Min"          = min (x, na.rm = TRUE),
+         "Max"          = max (x, na.rm = TRUE),
+         "1st Quartile" = format(round(as.vector(quantile(x, probs = 0.25, na.rm = TRUE)),2), nsmall=2),
+         "Median"       = format(round(median (x, na.rm = TRUE),2),nsmall=2),         
+         "3rd Quartile" = format(round(as.vector(quantile(x, probs = 0.75, na.rm = TRUE)),2), nsmall=2),
+         "Mean"         = format(round(mean(x, na.rm = TRUE),2), nsmall=2),
+         "Stdev"        = format(round(sd  (x, na.rm = TRUE),2),nsmall=2))}
+
+
+# Apply functions to data
+column1<-sapply(data1, functions)
+column2<-sapply(data2, functions)
+column3<-sapply(data3, functions)
+
+# Create table
+table<-cbind(column1,column2,column3)
+
+# Format table
+colnames(table)<-c(date1,date2,date3)
+
+# Print table
+kable(table,
+      format="latex",
+      caption="Total COVID-19 Cases",
+      align=rep('r',5),
+      booktabs=TRUE)%>%
+kable_styling(latex_options = 
+                c("striped", "hold_position"))
 
 ```
